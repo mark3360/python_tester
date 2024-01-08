@@ -1,0 +1,217 @@
+import os
+import re
+import pandas as pd
+import numpy as np
+import time
+from timeout_decorator import timeout
+
+
+class Test:
+    def __init__(self, name, time, expected, close, full_marks, part_marks, test):
+        self.name = name
+        self.time = time
+        self.expected = expected
+        self.close = close
+        self.full_marks = full_marks
+        self.part_marks = part_marks
+        self.the_test = test #Lambda expression that takes in a function and tests that function
+    
+    
+    
+    
+class Tester:
+    feedback = ""
+    marks_earned = 0
+    total_marks = 0
+    
+    #expected is "correct" result, close is a list for awarding part marks.
+    def run_test(self, student_function, test):
+        self.total_marks += test.full_marks
+        marks_awarded = 0
+        self.feedback += f"{test.name}:" 
+        
+        if student_function == None:
+            self.feedback += " Function Undefined!\n"
+        else:
+            try:
+                @timeout(test.time)
+                def f():
+                    return test.the_test(student_function)
+                result = f()
+                
+                if result == test.expected:
+                    self.feedback += " Test Passed!"
+                    marks_awarded = test.full_marks
+                elif result in test.close:
+                    self.feedback += " Function contains a slight error"
+                    marks_awarded = test.part_marks
+                else:
+                    self.feedback += f" Test Failed, expected {test.expected}, but saw {result}"
+            
+            except TimeoutError as e:
+                self.feedback +=  f" Function {student_function.__name__} timed out with time limit {test.time}"
+            except:
+                self.feedback += f" Function {student_function.__name__} encountered error while running"
+            
+        self.marks_earned += marks_awarded
+        self.feedback += "\n"
+        self.feedback += f"{marks_awarded} / {test.full_marks}"
+        self.feedback += "\n"
+        self.feedback += "\n"
+
+
+# Define tests here.
+# Order is name, time, expected, close, full_marks, part_marks, test
+
+data1 = {'Bond Return' : 1000,
+     'Bond Price' : 960,
+     'Chance of Poor Economy' : 0.4,
+     'A in Poor Economy' : 700,
+     'A in Good Economy' : 1200,
+     'B in Good Economy' : 200,
+     'C in Poor Economy' : 300,
+     'A Risk Premium' : 0.1}
+
+data2 = {'Bond Return' : 1000,
+     'Bond Price' : 920,
+     'Chance of Poor Economy' : 0.5,
+     'A in Poor Economy' : 1200,
+     'A in Good Economy' : 1200,
+     'B in Good Economy' : 300,
+     'C in Poor Economy' : 400,
+     'A Risk Premium' : 0.05}
+
+direct_test = lambda f : f(data1) #Used for directly checking output
+
+round_test = lambda f : round(f(data1), 4)
+round_test2 = lambda f : round(f(data2), 4)
+
+small_test = lambda f : f("../datafiles/A1/data_small.csv")
+
+big_test = lambda f : f("../datafiles/A1/data_large.csv")
+
+
+with_c_test = lambda f : round(f(data1, 165.65), 4)
+with_c_test2 = lambda f : round(f(data2, 165.65),4)
+
+def strat_test(func):
+    res = func(data1)
+    return [round(res[0], 2), round(res[1], 2)]
+
+def strat_test2(func):
+    res = func(data2)
+    return [round(res[0], 2), round(res[1], 2)]
+	
+
+testA1 = Test("risk_free_rate_test1", 10, 0.0417, [], 1, 0, round_test)
+testA2 = Test("payoff_A_test1", 10, 1000, [], 1, 0, round_test)
+testA3 = Test("Price_A_test1", 10, 875.9124, [], 1, 0, round_test)
+testA4 = Test("strategy_test1", 10, [-1, 1],[], 1, 0, strat_test)
+testA5 = Test("price_B_test1", 10, 81.5624, [], 1, 0, with_c_test)
+testA6 = Test("premium_B_test", 10, 0.4296, [], 1, 0, with_c_test)
+
+testB1 = Test("risk_free_rate_test2", 10, 0.0870, [], 1, 0, round_test2)
+testB2 = Test("payoff_A_test2", 10, 1200, [], 1, 0, round_test2)
+testB3 = Test("Price_A_test2", 10, 1055.4493, [], 1, 0, round_test2)
+testB4 = Test("strategy_test2", 10, [-0.67,-0.5],[], 1, 0, strat_test2)
+testB5 = Test("price_B_test2", 10, 78.9365, [], 1, 0, with_c_test2)
+testB6 = Test("premium_B_tes2", 10, 0.8133, [], 1, 0, with_c_test2)
+
+testC1 = Test("locate_prices_test_small", 20, [152, 881], [], 1, 0, small_test) 
+testC2 = Test("locate_prices_test_large", 20, [24210,11474], [], 1, 0, big_test) 
+
+##########################################################################################################
+## The actual testing
+
+directory = "A1/"
+
+filename = os.path.basename(__file__)
+lst = filename.split(" - ")
+del lst[4:]
+
+(file_id, name, watiam, fileid) = lst
+
+
+print(f"Testing {watiam}") 
+
+feedback = f"Feedback for {watiam}:\n\n"
+
+the_tester = Tester()
+    
+    
+        
+#Attempt to load all student functions
+try:
+    s_risk_free_rate = risk_free_rate
+except:
+    s_risk_free_rate = None
+try:
+    s_payoff_A = payoff_A
+except:
+    s_payoff_A = None
+try:
+    s_price_A = price_A
+except:
+    try:
+        s_price_A = Price_A
+    except:
+        s_price_A = None
+try:
+    s_strategy = strategy
+except:
+    s_strategy = None
+try:
+    s_price_B = price_B
+except:
+    s_price_B = None
+try:
+    s_premium_B = premium_B
+except:
+    s_premium_B = None
+try:
+    s_locate_prices = locate_prices
+except:
+    s_locate_prices = None
+ 
+
+the_tester.run_test(s_risk_free_rate, testA1)
+the_tester.run_test(s_risk_free_rate, testB1)
+
+the_tester.run_test(s_payoff_A, testA2)
+the_tester.run_test(s_payoff_A, testB2)
+
+the_tester.run_test(s_price_A, testA3)
+the_tester.run_test(s_price_A, testB3)
+
+the_tester.run_test(s_strategy, testA4)
+the_tester.run_test(s_strategy, testB4)
+
+the_tester.run_test(s_price_B, testA5)
+the_tester.run_test(s_price_B, testB5)
+
+the_tester.run_test(s_premium_B, testA6)
+the_tester.run_test(s_premium_B, testB6)
+
+
+the_tester.run_test(s_locate_prices , testC1)
+the_tester.run_test(s_locate_prices, testC2)
+
+
+
+feedback += the_tester.feedback
+total = the_tester.total_marks
+score = the_tester.marks_earned
+x = round(100*score/total, 4)
+
+
+feedback += f"Total: {score}/{total}:         {x}% \n"
+
+filename = "../feedback/" + file_id + " - " +  name + " - " +  watiam + " - " +  "feedback.txt"
+
+with open(filename, 'w') as fp:
+	fp.write(feedback)
+
+grades_df = pd.read_csv("../grades.csv").set_index("Username")
+grades_df.at["#" + watiam, "Module 1 Python Points Grade <Numeric MaxPoints:1.25 Weight:6.25 Category:Python exercises CategoryWeight:20>"] = x
+
+grades_df.to_csv("../grades.csv")

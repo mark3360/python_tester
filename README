@@ -1,0 +1,11 @@
+Process:
+
+1. Run python detect_illegal.py
+
+2. Then cd into assn dir and run python conversion script
+
+3. Update the testing_template with the necessary tests
+
+4. Run appender.sh
+
+5. Change the Datafile directory in mark_submissions.sh, then run mark_submissions.sh 

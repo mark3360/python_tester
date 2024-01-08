@@ -1,0 +1,283 @@
+import os
+import re
+import pandas as pd
+import numpy as np
+import time
+from IPython.display import display
+from timeout_decorator import timeout
+
+
+class Test:
+    def __init__(self, name, time, full_marks, test, student_function):
+        self.name = name    # Name of test
+        self.time = time    # Time allotted to run test in seconds 
+        self.full_marks = full_marks   # Maximum marks on the test
+        self.the_test = test 
+        self.funct = student_function
+
+# the_test is Function that takes in a function and tests that function, returns list containing
+# marks awarded and feedback
+                             
+    
+    
+    
+    
+class Tester:
+    feedback = ""
+    marks_earned = 0
+    total_marks = 0
+    
+    #expected is "correct" result, close is a list for awarding part marks.
+    def run_test(self, test):
+        student_function = test.funct
+        self.total_marks += test.full_marks
+        marks_awarded = 0
+        self.feedback += f"{test.name}: " 
+        
+        if student_function == None:
+            self.feedback += "Function Undefined!\n"
+        else:
+            try:
+                @timeout(test.time)
+                def f():
+                    return test.the_test(student_function)
+                result = f()
+                marks_awarded = result[0]
+                test_feedback = result[1]
+                self.feedback += test_feedback
+            
+            except TimeoutError as e:
+                self.feedback +=  f"Function {student_function.__name__} timed out with time limit {test.time}"
+            except:
+                self.feedback += f"Function {student_function.__name__} encountered error while running"
+            
+        self.marks_earned += marks_awarded
+        self.feedback += "\n"
+        self.feedback += f"{marks_awarded} / {test.full_marks}"
+        self.feedback += "\n"
+        self.feedback += "\n"
+
+
+# Consumes a list of student functions (as strings), and returns the list containing the actual student functions.
+def load_functions(lst):
+    ans = []
+    for f in lst:
+        try:
+            exec(f"ans.append({f})",globals(), locals())
+        except:
+            if f == "moody_correlation":
+                try:
+                    ans.append(moody)
+                    continue
+                except:
+                    ans.append(None)
+                    continue
+    return ans
+
+##########################################################################################################
+##########################################################################################################
+# Define tests here.
+
+
+def cp_1(f):
+    pts = 0
+    res = f(1000,0.06,0.058,3,3)
+    ans = 1005.74
+    
+    if round(res, 2) == ans:
+        feedback = "Test passed!"
+        pts = 1
+    else:
+        feedback = f"Test failed, saw {res}, but expected {ans}"
+    return [pts, feedback]
+
+def cp_2(f):
+    pts = 0
+    res = f(1000,0.06,0.058,3,8)
+    ans = 1005.74
+    
+    if round(res, 2) == ans:
+        feedback = "Test passed!"
+        pts = 0.5
+    else:
+        feedback = f"Test failed, saw {res}, but expected {ans}"
+    return [pts, feedback]
+
+def cp_3(f):
+    pts = 0
+    res = f(1000,0.06,0.058,3,9)
+    ans = 1006.55
+    
+    if round(res, 2) == ans:
+        feedback = "Test passed!"
+        pts = 0.5
+    else:
+        feedback = f"Test failed, saw {res}, but expected {ans}"
+    return [pts, feedback]
+
+def cp_4(f):
+    pts = 0
+    res = f(900,0.07,0.06,3,3)
+    ans = 926.10
+    
+    if round(res, 2) == ans:
+        feedback = "Test passed!"
+        pts = 1
+    else:
+        feedback = f"Test failed, saw {res}, but expected {ans}"
+    return [pts, feedback]
+
+def fr_1(f):
+    pts = 0
+    res = f(1000,902.21,852.34)
+    ans = 0.0585
+    
+    if (round(res, 4) == ans) | (round(res/100, 4) == ans):
+        feedback = "Test passed!"
+        pts = 1
+    else:
+        feedback = f"Test failed, saw {res}, but expected {ans}"
+    return [pts, feedback]
+
+def fr_2(f):
+    pts = 0
+    res = f(1000,900.00,800.00)
+    ans = 0.125
+    
+    if (round(res, 3) == ans) | (round(res/100, 3) == ans):
+        feedback = "Test passed!"
+        pts = 1
+    else:
+        feedback = f"Test failed, saw {res}, but expected {ans}"
+    return [pts, feedback]
+
+def sig(f):
+    pts = 0
+    path = "ratings.csv"
+    res = f(path)
+    ans = 0.9545
+    
+    if (round(res, 4) == ans) | (round(res/100, 4) == ans):
+        feedback = "Test passed!"
+        pts = 1
+    else:
+        feedback = f"Test failed, saw {res}, but expected {ans}"
+    return [pts, feedback]
+
+def mig(f):
+    pts = 0
+    path = "ratings.csv"
+    res = f(path)
+    ans = 0.9553
+    
+    if (round(res, 4) == ans) | (round(res/100, 4) == ans):
+        feedback = "Test passed!"
+        pts = 1
+    else:
+        feedback = f"Test failed, saw {res}, but expected {ans}"
+    return [pts, feedback]
+
+def sc(f):
+    pts = 0
+    path1 = "ratings.csv"
+    path2 = "bonds.csv"
+    res = f(path2,path1)
+    ans = -0.5339
+    
+    if (round(res, 4) == ans) | (round(res/100, 4) == ans):
+        feedback = "Test passed!"
+        pts = 1
+    else:
+        feedback = f"Test failed, saw {res}, but expected {ans}"
+    return [pts, feedback]
+
+def mc(f):
+    pts = 0
+    path1 = "ratings.csv"
+    path2 = "bonds.csv"
+    
+    if f == None:
+        try:
+            f = moody
+        except:
+            f = None
+    
+    res = f(path2,path1)
+    ans = -0.5021
+    
+    if (round(res, 4) == ans) | (round(res/100, 4) == ans):
+        feedback = "Test passed!"
+        pts = 1
+    else:
+        feedback = f"Test failed, saw {res}, but expected {ans}"
+    return [pts, feedback]
+
+
+
+
+
+# Load student functions
+sf = load_functions(["clean_price", "forward_rate", "SP_investment_grade", "moody_investment_grade","SP_correlation","moody_correlation"])
+
+# Order is name, time, full_marks, test
+
+tcp_1 = Test("clean_price_original_data",10, 1, cp_1, sf[0])
+tcp_2 = Test("clean_price_date1",10, 0.5, cp_2, sf[0])
+tcp_3 = Test("clean_price_date2",10, 0.5, cp_3, sf[0])
+tcp_4 = Test("clean_price_test4",10, 1, cp_4, sf[0])
+
+tfr_1 = Test("forward_rate_test1", 10, 1, fr_1, sf[1])
+tfr_2 = Test("forward_rate_test1", 10, 1, fr_2, sf[1])
+
+
+tsig = Test("SP_investment_grade", 30, 1, sig, sf[2])
+
+tmig = Test("moody_investment_grade", 30, 1, mig, sf[3])
+
+tsc = Test("SP_correlation", 30, 1, sc, sf[4])
+
+tmc = Test("moody_correlation", 30, 1, mc, sf[5])
+
+# Place all tests in list below
+the_tests = [tcp_1, tcp_2, tcp_3, tcp_4, tfr_1, tfr_2, tsig, tmig, tsc, tmc]
+
+
+##########################################################################################################
+##########################################################################################################
+## The actual testing
+
+filename = os.path.basename(__file__)
+lst = filename.split(" - ")
+del lst[4:]
+
+(file_id, name, watiam, fileid) = lst
+
+
+print(f"Testing {watiam}") 
+
+feedback = f"Feedback for {watiam}:\n\n"
+
+the_tester = Tester()
+    
+    
+        
+for test in the_tests:
+    the_tester.run_test(test)
+
+feedback += the_tester.feedback
+total = the_tester.total_marks
+score = the_tester.marks_earned
+x = round(100*score/total, 4)
+
+
+feedback += f"Total: {score}/{total}:         {x}% \n"
+
+filename = "../feedback/" + file_id + " - " +  name + " - " +  watiam + " - " +  "feedback.txt"
+
+with open(filename, 'w') as fp:
+	fp.write(feedback)
+
+grades_df = pd.read_csv("../grades.csv").set_index("Username")
+grades_df.at["#" + watiam, "Module 4 Python Points Grade <Numeric MaxPoints:100 Weight:6.25 Category:Python exercises CategoryWeight:20>"] = x
+
+grades_df.to_csv("../grades.csv")
